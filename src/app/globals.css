@@ -3,10 +3,12 @@
 .ribbon-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px 24px}
 .ribbon-head h1{margin:0;font-size:28px;letter-spacing:-.8px;color:#2c1f36;line-height:1.15}
 .ribbon-head p{margin:5px 0 0;color:#847891;font-size:14px}
-.ribbon-nums{display:flex;gap:26px;margin:0}
-.ribbon-nums div{display:flex;flex-direction:column-reverse}
-.ribbon-nums dd{margin:0;font-size:24px;font-weight:800;color:#2c1f36;letter-spacing:-.5px;font-variant-numeric:tabular-nums;line-height:1.1}
-.ribbon-nums dt{font-size:12.5px;color:#847891}
+.ribbon-nums{display:flex;margin:0}
+.ribbon-nums div{display:flex;flex-direction:column-reverse;gap:4px;padding:2px 26px;border-left:1px solid #ebe3f0;text-align:center}
+.ribbon-nums div:first-child{border-left:0;padding-left:0}
+.ribbon-nums div:last-child{padding-right:0}
+.ribbon-nums dd{margin:0;font-size:26px;font-weight:800;color:#2c1f36;letter-spacing:-.5px;font-variant-numeric:tabular-nums;line-height:1}
+.ribbon-nums dt{font-size:13px;color:#847891}
 .ribbon-scroll{overflow-x:auto;margin:6px -6px 0}
 .ribbon-svg{display:block;width:100%;min-width:620px;height:auto}
 .ribbon-track{stroke:#e3d6ec;stroke-width:6;stroke-linecap:round}
