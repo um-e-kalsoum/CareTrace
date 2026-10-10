@@ -13,12 +13,12 @@
 
 ## Must-have before submission
 
-- [ ] Screenshot of CoCo exploring tables and generating/verifying SQL; save to `docs/` and reference in README.
+- [x] Screenshot of CoCo exploring tables and generating/verifying SQL; save to `docs/` and reference in README.
 - [ ] Full working live demo, including at least one insert and a regenerated AI report.
 - [ ] Recorded demo video or link; check that the video is playable.
-- [ ] Public GitHub repository with MIT license, README, TypeScript source, SQL provenance, model license link.
-- [ ] Name the free Snowflake Marketplace dataset and describe CoCo's actual contribution.
-- [ ] No real patient data, credentials, or `.env.local` in the repository.
+- [x] Public GitHub repository with MIT license, README, TypeScript source, SQL provenance, model license link.
+- [x] Name the free Snowflake Marketplace dataset and describe CoCo's actual contribution.
+- [x] No real patient data, credentials, or `.env.local` in the repository.
 - [ ] Submit before 5:00 PM local event time.
 
 ## Honest limitations
