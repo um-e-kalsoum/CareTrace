@@ -4,7 +4,7 @@
 
 Built for **Hacktoberfest x ElleHacks Hack Day 2026**. Entered in **Best Open-Source AI Project** and **Best Open-Source AI Project with Snowflake**.
 
-🎥 **Demo video:** _ADD LINK HERE_
+🎥 **Demo video:** [Watch on YouTube](https://www.youtube.com/watch?v=bkcg9mivp4Y)
 
 > **Demo only.** Every patient record in this app is synthetic (Synthea-generated). CareTrace is not a medical device. It does not diagnose, recommend treatment or give emergency advice.
 
@@ -33,6 +33,10 @@ CareTrace combines a patient's dated clinical records with symptoms they log the
 - **AI appointment brief:** open-weight **Llama 3.1 8B**, run through Snowflake Cortex, summarizes the latest records into highlights, recurring issues, questions for the appointment, and gaps.
 - **Evidence explorer:** each `Clinical #ID` or `Self-reported #ID` the model cites is checked against the real timeline. IDs that don't exist are flagged, so made-up citations are visible.
 
+## Why I built it
+
+Every time I go to the doctor, I forget my symptoms the moment I sit down. For women, the dates matter: cycles, pregnancies and losses. How many times has your doctor asked when your last period was and how long it lasted? If you can't answer correctly, your doctor can't give you the best care they can. I built CareTrace so you don't have to remember that information yourself.
+
 ## Who it helps
 
 People, especially those managing reproductive and women's health, who must explain years of scattered history in a short appointment. Important dates are easy to lose: a past miscarriage, a pregnancy complication, when a symptom started. CareTrace keeps the clinical record and the patient's own account together, and it helps the patient arrive with organized, sourced notes and good questions.
@@ -56,7 +60,7 @@ Not applicable. CareTrace is a web app with a model harness. It is not an agent 
 
 | Requirement | How CareTrace meets it |
 |---|---|
-| **Snowflake CoCo** | Used to explore the dataset, choose a patient, write and check the SQL, and create the app's tables (details below). |
+| **Snowflake CoCo** | Used to find the dataset, explore it, choose a patient, write the SQL, create the app's tables, set up a least-privilege role and clean the demo data (details below). |
 | **Free Snowflake dataset** | **Synthetic Healthcare Data - Clinical and Claims** by *Snowflake Virtual Hands-On Labs* (free [Snowflake Marketplace](https://app.snowflake.com/marketplace) listing). Database: `SYNTHETIC_HEALTHCARE_DATA_CLINICAL_AND_CLAIMS`, schema `SILVER`, tables `CONDITIONS`, `ENCOUNTERS`, `OBSERVATIONS` and `PATIENTS`. |
 | **Open-weight AI** | `llama3.1-8b` (Meta Llama 3.1 8B Instruct, a small language model with 10B or fewer parameters) called via `SNOWFLAKE.CORTEX.COMPLETE`. License: [Llama 3.1 Community License](https://www.llama.com/llama3_1/license/). |
 | **Open-source repo** | Public repository, [MIT License](LICENSE). |
