@@ -2,13 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Activity, ArrowDownToLine, ArrowRight, BookOpenCheck, CalendarDays,
-  CheckCircle2, ChevronDown, CircleAlert, ClipboardList, Database,
-  FileCheck2, FileText, HeartPulse, LoaderCircle, Plus, RefreshCw,
-  Search, ShieldCheck, Sparkles, Stethoscope, TrendingUp,
+  Activity, ArrowDownToLine, CheckCircle2, ChevronDown, CircleAlert, ClipboardList,
+  FileText, HeartPulse, LoaderCircle, Plus, RefreshCw, Search, ShieldCheck, Sparkles,
 } from "lucide-react";
 import {
-  Bar, BarChart, CartesianGrid, Legend, Line, LineChart,
+  Bar, BarChart, CartesianGrid, Line, LineChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 
@@ -34,6 +32,9 @@ function typeLabel(row: EventRow) {
   if (row.eventType.startsWith("OBSERVATION")) return "Observation";
   if (row.eventType.startsWith("ENCOUNTER")) return "Encounter";
   return "Condition";
+}
+function typeSlug(label: string) {
+  return label.toLowerCase().replace(/[^a-z]+/g, "-");
 }
 function downloadReport(report: string) {
   const blob = new Blob([report], { type: "text/markdown;charset=utf-8" });
@@ -102,7 +103,11 @@ export default function CareTrace() {
   const selected = filtered.find((row) => `${row.source}:${row.sourceId}` === selectedKey) ?? filtered[0];
   const clinicalCount = events.filter((row) => row.source === "Clinical").length;
   const personalCount = events.length - clinicalCount;
-  const years = events.length ? new Set(events.map((row) => row.date.slice(0, 4))).size : 0;
+  const yearSpan = events.length ? Number(events[events.length - 1].date.slice(0, 4)) - Number(events[0].date.slice(0, 4)) : 0;
+  const selectFromRibbon = (key: string) => {
+    setFilter("All events"); setQuery(""); setSelectedKey(key);
+    document.getElementById("care-history")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   const byYear = useMemo(() => {
     const counts = new Map<string, number>();
     events.forEach((event) => counts.set(event.date.slice(0, 4), (counts.get(event.date.slice(0, 4)) || 0) + 1));
@@ -139,54 +144,51 @@ export default function CareTrace() {
     } finally { setGenerating(false); }
   };
 
-  const nav: { id: View; title: string; hint: string; icon: typeof Activity }[] = [
-    { id: "overview", title: "My care timeline", hint: "History & patterns", icon: Activity },
-    { id: "log", title: "Symptom journal", hint: "Track a new entry", icon: Plus },
-    { id: "brief", title: "Appointment brief", hint: "Your AI summary", icon: ClipboardList },
+  const nav: { id: View; title: string; icon: typeof Activity }[] = [
+    { id: "overview", title: "My care timeline", icon: Activity },
+    { id: "log", title: "Symptom journal", icon: Plus },
+    { id: "brief", title: "Appointment brief", icon: ClipboardList },
   ];
 
   return <div className="shell">
     <aside className="sidebar">
-      <div className="brand"><div className="brand-mark"><HeartPulse size={23}/></div><div><strong>caretrace</strong><span>HEALTH, IN CONTEXT</span></div></div>
-      <div className="side-heading">WORKSPACE</div>
+      <div className="brand"><div className="brand-mark"><HeartPulse size={20}/></div><strong>caretrace</strong></div>
       <nav className="side-nav" aria-label="Main menu">{nav.map((item) => {
         const Icon = item.icon;
-        return <button key={item.id} onClick={() => setView(item.id)} className={`nav-item ${view === item.id ? "active" : ""}`}>
-          <Icon size={19}/><span><strong>{item.title}</strong><small>{item.hint}</small></span>{view === item.id && <ArrowRight size={16}/>}
+        return <button key={item.id} onClick={() => setView(item.id)} className={`nav-item ${view === item.id ? "active" : ""}`} aria-current={view === item.id ? "page" : undefined}>
+          <Icon size={18}/><span>{item.title}</span>
         </button>;
       })}</nav>
       <div className="sidebar-bottom">
-        <div className="patient-mini"><div className="avatar">ED</div><div><strong>Eden Dach</strong><span>Synthetic patient #1563304</span></div></div>
-        <div className="private-note"><ShieldCheck size={17}/><span>Private by design<br/><small>Fictional demo records only</small></span></div>
+        <div className="patient-mini"><div className="avatar">ED</div><div><strong>Eden Dach</strong><span>Synthetic patient</span></div></div>
       </div>
     </aside>
 
     <main className="main">
-      <header className="topbar"><div className="breadcrumb">My health space <span>/</span> <strong>{view === "overview" ? "Overview" : view === "log" ? "Journal" : "Appointment brief"}</strong></div><div className="top-actions"><span className="demo-pill"><span className="status-dot"/> SYNTHETIC DATA</span><button className="refresh-btn" onClick={() => void reload()} title="Refresh data"><RefreshCw size={17}/></button></div></header>
+      <header className="topbar"><div className="breadcrumb">My health space <span>/</span> <strong>{view === "overview" ? "Overview" : view === "log" ? "Journal" : "Appointment brief"}</strong></div><div className="top-actions"><button className="refresh-btn" onClick={() => void reload()} title="Refresh data" aria-label="Refresh data"><RefreshCw size={16}/></button></div></header>
       <div className="page-wrap">
         {error && <div className="error-box"><CircleAlert size={20}/><span>{error}</span><button onClick={() => setError("")}>Dismiss</button></div>}
         {view === "overview" && <>
-          <div className="hero"><div className="hero-content"><div className="eyebrow">YOUR STORY MATTERS</div><h1>Every symptom has a story.<br/><em>Let's connect the dots.</em></h1><p>A clearer view of your health journey, grounded in your actual records.</p><button onClick={() => setView("brief")} className="hero-button">Prepare for an appointment <ArrowRight size={18}/></button></div><div className="hero-art" aria-hidden="true"><div className="hero-ring ring-one"/><div className="hero-ring ring-two"/><div className="hero-center"><HeartPulse size={49}/></div></div></div>
-          <div className="section-heading"><div><span className="section-label">YOUR HEALTH AT A GLANCE</span><h2>Care overview</h2></div><span className="updated-caption">{loading ? "Loading..." : "Connected to Snowflake"}</span></div>
-          <div className="metrics">
-            <Metric title="Timeline records" value={events.length} subtitle="Across all sources" icon={<ClipboardList/>}/>
-            <Metric title="Clinical events" value={clinicalCount} subtitle="Imported medical history" icon={<Stethoscope/>}/>
-            <Metric title="Journal entries" value={personalCount} subtitle="Your recorded symptoms" icon={<BookOpenCheck/>}/>
-            <Metric title="Years represented" value={years} subtitle="Distinct recorded years" icon={<CalendarDays/>}/>
-          </div>
+          <section className="ribbon">
+            <div className="ribbon-head">
+              <div><h1>Every symptom has a story.</h1><p>Eden Dach · born Mar 28, 1981{events.length ? ` · ${yearSpan} years of records` : ""}</p></div>
+              <dl className="ribbon-nums"><div><dd>{events.length || "–"}</dd><dt>records</dt></div><div><dd>{events.length ? clinicalCount : "–"}</dd><dt>clinical</dt></div><div><dd>{events.length ? personalCount : "–"}</dd><dt>journal</dt></div></dl>
+            </div>
+            {events.length ? <CareRibbon events={events} selectedKey={selected ? `${selected.source}:${selected.sourceId}` : ""} onSelect={selectFromRibbon}/> : <div className="loading-line">{loading ? <><LoaderCircle className="spin"/> Loading your records...</> : "No records yet."}</div>}
+            <div className="ribbon-legend">{(["Condition", "Encounter", "Observation", "Self-reported"] as const).map((t) => <span key={t}><i className={`dot-${typeSlug(t)}`}/>{t === "Self-reported" ? "Your journal entry" : t}</span>)}<span className="ribbon-hint">Select a dot to open the record</span></div>
+          </section>
           <div className="two-col">
-            <section className="panel chart-panel"><div className="panel-title"><div><h3>Events over time</h3><p>Your medical journey, year by year</p></div><TrendingUp size={19}/></div>
-              <div className="chart-wrap">{byYear.length ? <ResponsiveContainer width="100%" height="100%"><BarChart data={byYear} margin={{ top: 10, right: 10, bottom: 0, left: -24 }}><CartesianGrid strokeDasharray="3 5" stroke="#eee8f3" vertical={false}/><XAxis dataKey="year" tick={{ fontSize: 11, fill: "#877b94" }} axisLine={false} tickLine={false}/><YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#877b94" }} axisLine={false} tickLine={false}/><Tooltip cursor={{fill:"#f6effb"}}/><Bar name="Events" dataKey="count" fill="#9674b8" radius={[6, 6, 0, 0]}/></BarChart></ResponsiveContainer> : <Empty/>}</div>
+            <section className="panel chart-panel"><div className="panel-title"><div><h3>Events over time</h3><p>Records per year</p></div></div>
+              <div className="chart-wrap">{byYear.length ? <ResponsiveContainer width="100%" height="100%"><BarChart data={byYear} margin={{ top: 10, right: 10, bottom: 0, left: -24 }}><CartesianGrid strokeDasharray="3 5" stroke="#ece4f1" vertical={false}/><XAxis dataKey="year" tick={{ fontSize: 12, fill: "#847891" }} axisLine={false} tickLine={false}/><YAxis allowDecimals={false} tick={{ fontSize: 12, fill: "#847891" }} axisLine={false} tickLine={false}/><Tooltip cursor={{fill:"#f4edf9"}}/><Bar name="Records" dataKey="count" fill="#8b62ad" radius={[4, 4, 0, 0]}/></BarChart></ResponsiveContainer> : <Empty/>}</div>
             </section>
-            <section className="panel chart-panel"><div className="panel-title"><div><h3>Symptom severity</h3><p>Average self-reported severity by month</p></div><Activity size={19}/></div>
-              <div className="chart-wrap">{monthly.length ? <ResponsiveContainer width="100%" height="100%"><LineChart data={monthly} margin={{ top: 10, right: 12, bottom: 0, left: -24 }}><CartesianGrid strokeDasharray="3 5" stroke="#eee8f3" vertical={false}/><XAxis dataKey="month" tick={{ fontSize: 11, fill: "#877b94" }} axisLine={false} tickLine={false}/><YAxis domain={[0,10]} tick={{ fontSize: 11, fill: "#877b94" }} axisLine={false} tickLine={false}/><Tooltip/><Legend/><Line name="Avg. severity" dataKey="avgSeverity" stroke="#ad699a" strokeWidth={3} dot={{r:4}} activeDot={{r:6}}/></LineChart></ResponsiveContainer> : <Empty/>}</div>
-              <div className="chart-footnote">Monthly averages calculated in Snowflake SQL.</div>
+            <section className="panel chart-panel"><div className="panel-title"><div><h3>Symptom severity</h3><p>Average self-reported severity by month</p></div></div>
+              <div className="chart-wrap">{monthly.length ? <ResponsiveContainer width="100%" height="100%"><LineChart data={monthly} margin={{ top: 10, right: 12, bottom: 0, left: -24 }}><CartesianGrid strokeDasharray="3 5" stroke="#ece4f1" vertical={false}/><XAxis dataKey="month" tick={{ fontSize: 12, fill: "#847891" }} axisLine={false} tickLine={false}/><YAxis domain={[0,10]} tick={{ fontSize: 12, fill: "#847891" }} axisLine={false} tickLine={false}/><Tooltip/><Line name="Avg. severity" dataKey="avgSeverity" stroke="#c2457f" strokeWidth={2.5} dot={{ r: 4, fill: "#fff", strokeWidth: 2.5 }} activeDot={{r:6}}/></LineChart></ResponsiveContainer> : <Empty/>}</div>
             </section>
           </div>
-          <section className="panel history-panel"><div className="panel-title history-header"><div><h3>Care history</h3><p>Trace every event back to its original record</p></div><span className="event-count">{filtered.length} events</span></div>
+          <section className="panel history-panel" id="care-history"><div className="panel-title history-header"><div><h3>Care history</h3><p>Trace every event back to its original record</p></div><span className="event-count">{filtered.length} events</span></div>
             <div className="filter-row"><div className="searchbox"><Search size={17}/><input aria-label="Search clinical history" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search symptoms, dates or conditions..."/></div><div className="select-wrap"><select aria-label="Filter event types" value={filter} onChange={(e) => setFilter(e.target.value)}>{["All events","Condition","Encounter","Observation","Self-reported"].map((t) => <option key={t}>{t}</option>)}</select><ChevronDown size={14}/></div></div>
-            {loading ? <div className="loading-line"><LoaderCircle className="spin"/> Loading Snowflake records...</div> : <div className="history-grid"><div className="event-list">{filtered.length === 0 ? <Empty/> : filtered.map((event) => <button className={`event-item ${selected?.sourceId===event.sourceId && selected?.source===event.source ? "selected" : ""}`} key={`${event.source}:${event.sourceId}`} onClick={() => setSelectedKey(`${event.source}:${event.sourceId}`)}><span className={`event-type-tag ${event.source === "Clinical" ? "tag-clinical" : "tag-self"}`}>{typeLabel(event)}</span><span className="event-copy"><strong>{event.description}</strong><small>{prettyDate(event.date)}</small></span><ArrowRight size={16}/></button>)}</div>
-            <div className="evidence-panel">{selected ? <><div className="evidence-icon"><FileCheck2 size={22}/></div><h4>Original record</h4><p>{selected.description}</p><dl><div><dt>Date</dt><dd>{prettyDate(selected.date)}</dd></div><div><dt>Source</dt><dd>{selected.source}</dd></div><div><dt>Source ID</dt><dd>#{selected.sourceId}</dd></div><div><dt>Type</dt><dd>{typeLabel(selected)}</dd></div></dl><div className="verified-pill"><CheckCircle2 size={15}/> Source found in Snowflake</div></> : <Empty/>}</div></div>}
+            {loading ? <div className="loading-line"><LoaderCircle className="spin"/> Loading Snowflake records...</div> : <div className="history-grid"><div className="event-list">{filtered.length === 0 ? <Empty/> : filtered.map((event) => <button className={`event-item ${selected?.sourceId===event.sourceId && selected?.source===event.source ? "selected" : ""}`} key={`${event.source}:${event.sourceId}`} onClick={() => setSelectedKey(`${event.source}:${event.sourceId}`)}><span className={`event-type-tag tag-${typeSlug(typeLabel(event))}`}>{typeLabel(event)}</span><span className="event-copy"><strong>{event.description}</strong><small>{prettyDate(event.date)}</small></span></button>)}</div>
+            <div className={`evidence-panel ${selected ? `type-${typeSlug(typeLabel(selected))}` : ""}`}>{selected ? <><div className="evidence-band"><h4>Original record</h4><span>{typeLabel(selected)}</span></div><div className="evidence-body"><p>{selected.description}</p><dl><div><dt>Date</dt><dd>{prettyDate(selected.date)}</dd></div><div><dt>Source</dt><dd>{selected.source}</dd></div><div><dt>Source ID</dt><dd>#{selected.sourceId}</dd></div><div><dt>Type</dt><dd>{typeLabel(selected)}</dd></div></dl></div></> : <Empty/>}</div></div>}
           </section>
         </>}
 
@@ -199,8 +201,54 @@ export default function CareTrace() {
   </div>;
 }
 
-function Metric({ title, value, subtitle, icon }: {title: string; value: number; subtitle: string; icon: React.ReactNode }) {
-  return <div className="metric"><div className="metric-top"><span>{title}</span><div className="metric-icon">{icon}</div></div><strong>{value}</strong><small>{subtitle}</small></div>;
+// The whole history on one true-to-scale line: clinical records on the line, journal entries just above it.
+function CareRibbon({ events, selectedKey, onSelect }: { events: EventRow[]; selectedKey: string; onSelect: (key: string) => void }) {
+  const W = 900, PAD = 30, LINE = 70;
+  const firstYear = Number(events[0].date.slice(0, 4));
+  const lastYear = Number(events[events.length - 1].date.slice(0, 4));
+  const t0 = Date.UTC(firstYear, 0, 1), t1 = Date.UTC(lastYear + 1, 0, 1);
+  const x = (date: string) => PAD + ((Date.UTC(+date.slice(0, 4), +date.slice(5, 7) - 1, +date.slice(8, 10)) - t0) / (t1 - t0)) * (W - 2 * PAD);
+  const span = lastYear - firstYear;
+  const step = span > 12 ? 5 : span > 5 ? 2 : 1;
+  const ticks: number[] = [];
+  for (let y = firstYear; y <= lastYear; y += step) ticks.push(y);
+  if (ticks[ticks.length - 1] !== lastYear) ticks.push(lastYear);
+
+  // Label conditions and emergency visits, alternating above/below and skipping any that would overlap.
+  const lastEnd = { above: -Infinity, below: -Infinity };
+  let prefer: "above" | "below" = "above";
+  const labels = events
+    .filter((e) => e.source === "Clinical" && (e.eventType === "CONDITION" || /emergency/i.test(e.eventType)))
+    .flatMap((e) => {
+      const text = e.description.replace(/\s*\([^)]*\)\s*$/, "").replace(/^Past pregnancy history of /, "History of ");
+      const cx = x(e.date), w = text.length * 6.4;
+      const anchor: "start" | "middle" | "end" = cx - w / 2 < 4 ? "start" : cx + w / 2 > W - 4 ? "end" : "middle";
+      const left = anchor === "start" ? cx : anchor === "end" ? cx - w : cx - w / 2;
+      const side = ([prefer, prefer === "above" ? "below" : "above"] as const).find((s) => left > lastEnd[s] + 12);
+      if (!side) return [];
+      lastEnd[side] = left + w;
+      prefer = side === "above" ? "below" : "above";
+      return [{ key: `${e.source}:${e.sourceId}`, cx, text, anchor, side }];
+    });
+
+  return <div className="ribbon-scroll"><svg className="ribbon-svg" viewBox={`0 0 ${W} 140`} role="img" aria-label={`Care timeline from ${firstYear} to ${lastYear} with ${events.length} records`}>
+    <line x1={PAD} y1={LINE} x2={W - PAD} y2={LINE} className="ribbon-track"/>
+    {labels.map((l) => <g key={`label-${l.key}`}>
+      <line x1={l.cx} x2={l.cx} y1={l.side === "above" ? LINE - 8 : LINE + 8} y2={l.side === "above" ? 40 : 98} className="ribbon-stem"/>
+      <text x={l.cx} y={l.side === "above" ? 34 : 112} textAnchor={l.anchor} className="ribbon-label">{l.text}</text>
+    </g>)}
+    {events.map((e) => {
+      const key = `${e.source}:${e.sourceId}`;
+      const self = e.source === "Self-reported";
+      return <circle key={key} cx={x(e.date)} cy={self ? LINE - 14 : LINE} r={self ? 5 : 5.5}
+        className={`ribbon-dot dot-${typeSlug(typeLabel(e))} ${key === selectedKey ? "is-selected" : ""}`}
+        role="button" tabIndex={0} aria-label={`${prettyDate(e.date)}: ${e.description}`}
+        onClick={() => onSelect(key)} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); onSelect(key); } }}>
+        <title>{`${prettyDate(e.date)} · ${e.description}`}</title>
+      </circle>;
+    })}
+    {ticks.map((y) => <text key={y} x={x(`${y}-01-01`)} y={134} textAnchor={y === firstYear ? "start" : "middle"} className="ribbon-year">{y}</text>)}
+  </svg></div>;
 }
 function Empty() { return <div className="empty">No records available for this view.</div>; }
 function PageIntro({ eyebrow, title, description }: {eyebrow:string; title:string; description:string}) {
