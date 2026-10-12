@@ -33,17 +33,13 @@ Every time I go to the doctor, I forget my symptoms the moment I sit down. For w
 
 ### How CoCo helped
 
-1. **Found the dataset.** I asked CoCo to search the Marketplace for synthetic healthcare data. It returned *Synthetic Healthcare Data - Clinical and Claims*, and I added that listing.
+1. **Found the dataset** by searching the Marketplace for synthetic healthcare data.
    ![CoCo finds the Marketplace dataset](docs/coco/1-coco-finds-marketplace-dataset.png)
-2. **Explored the schema.** CoCo listed every table with its row counts (about 2.2B rows in total) and explained how they join on `PATIENT_ID` and `ENCOUNTER_ID`.
-3. **Found a demo patient.** CoCo wrote SQL joining `CONDITIONS` and `PATIENTS` to find female patients with several reproductive-health conditions. I chose synthetic patient **1563304**.
-4. **Built the timeline.** CoCo wrote the `UNION ALL` query over conditions, encounters and observations, and created `DEMO_TIMELINE` and `USER_NOTES`. The SQL is in [`sql/setup.sql`](sql/setup.sql).
-5. **Created a least-privilege role.** CoCo created `CARETRACE_APP` with only what the app needs, then tested each grant: reading the timeline, inserting a note and calling Cortex. The role can't delete, update or create anything.
+2. **Explored the schema and picked a patient** with several reproductive-health conditions (synthetic patient **1563304**).
+3. **Built the timeline tables** `DEMO_TIMELINE` and `USER_NOTES`. The SQL is in [`sql/setup.sql`](sql/setup.sql).
+4. **Set up security:** created the least-privilege `CARETRACE_APP` role, tested each grant and checked the access token.
    ![CoCo creates and tests the least-privilege role](docs/coco/2-coco-creates-least-privilege-role.png)
-6. **Checked the access token.** CoCo confirmed the app's token is limited to `CARETRACE_APP` and that the old token expired after rotation.
-   ![CoCo audits roles and the access token](docs/coco/3-coco-audits-roles-and-token.png)
-7. **Cleaned the demo data.** CoCo removed test notes before the demo, asking for confirmation before each `DELETE`.
-   ![CoCo removes test notes](docs/coco/4-coco-cleans-test-notes.png)
+5. **Cleaned the demo data** by removing test notes, confirming before each `DELETE`.
 
 ## Architecture
 
